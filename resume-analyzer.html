@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redline — Resume & Headline Editor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --paper: #edeae1;
+    --paper-raised: #f5f3ec;
+    --ink: #14181f;
+    --ink-soft: #4a5060;
+    --rule: #d3cfc0;
+    --amber: #f2b705;
+    --amber-deep: #b8860b;
+    --teal: #2e6e62;
+    --teal-bg: #dfeae6;
+    --red: #b23a2f;
+    --red-bg: #f3ddd8;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--paper);
+    background-image: radial-gradient(circle at 1px 1px, rgba(20,24,31,0.05) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+
+  body {
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    padding: 40px 24px 80px;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 32px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+  }
+
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber-deep);
+    margin: 0 0 8px;
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4.5vw, 42px);
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub {
+    font-size: 15px;
+    color: var(--ink-soft);
+    max-width: 560px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 28px;
+  }
+
+  @media (min-width: 860px) {
+    .layout { grid-template-columns: 1fr 1fr; }
+  }
+
+  .panel {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    padding: 24px;
+  }
+
+  .panel-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    background: transparent;
+    border: none;
+    resize: vertical;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+    outline: none;
+  }
+
+  textarea::placeholder { color: #9a9382; }
+
+  .char-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
+  .mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .mode-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .mode-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .mode-btn:hover:not(.active) { border-color: var(--ink); color: var(--ink); }
+
+  .score-row {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .score-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 56px;
+    line-height: 1;
+  }
+
+  .score-num.good { color: var(--teal); }
+  .score-num.mid { color: var(--amber-deep); }
+  .score-num.bad { color: var(--red); }
+
+  .score-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .check {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    border-left: 3px solid var(--rule);
+  }
+
+  .check.pass { border-left-color: var(--teal); background: var(--teal-bg); }
+  .check.warn { border-left-color: var(--amber-deep); background: #f7ecd1; }
+  .check.fail { border-left-color: var(--red); background: var(--red-bg); }
+
+  .check-icon {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    flex-shrink: 0;
+    width: 16px;
+  }
+
+  .check.pass .check-icon { color: var(--teal); }
+  .check.warn .check-icon { color: var(--amber-deep); }
+  .check.fail .check-icon { color: var(--red); }
+
+  .check-text b { font-weight: 600; }
+
+  .empty-state {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    padding: 40px 10px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  mark {
+    background: var(--amber);
+    color: var(--ink);
+    padding: 0 2px;
+    border-radius: 1px;
+  }
+  mark.weak {
+    background: var(--red-bg);
+    text-decoration: underline wavy var(--red);
+    text-decoration-thickness: 1.5px;
+  }
+
+  .annotated {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  footer {
+    margin-top: 40px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="kicker">Rules-based · No AI · Runs entirely in your browser</p>
+    <h1>Redline</h1>
+    <p class="sub">Paste a resume bullet or LinkedIn headline. Get a scored, line-marked edit — the same checks a sharp recruiter runs in their head in six seconds.</p>
+  </header>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="bullet">Resume bullet</button>
+    <button class="mode-btn" data-mode="headline">LinkedIn headline</button>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <p class="panel-label">
+        <span id="inputLabel">Your resume bullet</span>
+        <span class="char-count" id="charCount">0 characters</span>
+      </p>
+      <textarea id="input" placeholder="e.g. Responsible for managing a team and helping improve processes for the department"></textarea>
+    </div>
+
+    <div class="panel">
+      <p class="panel-label">Redline</p>
+      <div id="output">
+        <div class="empty-state">Paste something on the left.<br>The markup shows up here.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Analysis runs locally — nothing you paste is sent anywhere.</footer>
+</div>
+
+<script>
+  const WEAK_VERBS = ['responsible for', 'helped', 'worked on', 'assisted', 'involved in', 'participated in', 'tasked with', 'in charge of', 'duties included'];
+  const STRONG_VERBS = ['led', 'built', 'launched', 'drove', 'designed', 'architected', 'shipped', 'scaled', 'reduced', 'increased', 'optimized', 'automated', 'delivered', 'spearheaded', 'negotiated', 'transformed', 'streamlined', 'engineered', 'accelerated', 'cut', 'grew', 'saved', 'improved', 'implemented', 'created', 'directed', 'managed', 'developed', 'established', 'pioneered'];
+  const BUZZWORDS = ['synergy', 'dynamic', 'passionate', 'go-getter', 'team player', 'hard worker', 'detail-oriented', 'results-driven', 'self-starter', 'think outside the box', 'proactive', 'motivated individual', 'excellent communication skills', 'fast-paced environment', 'wear many hats', 'best of both worlds', 'guru', 'ninja', 'rockstar'];
+
+  const input = document.getElementById('input');
+  const output = document.getElementById('output');
+  const charCount = document.getElementById('charCount');
+  const inputLabel = document.getElementById('inputLabel');
+  const modeBtns = document.querySelectorAll('.mode-btn');
+
+  let mode = 'bullet';
+
+  modeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      modeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      inputLabel.textContent = mode === 'bullet' ? 'Your resume bullet' : 'Your LinkedIn headline';
+      input.placeholder = mode === 'bullet'
+        ? 'e.g. Responsible for managing a team and helping improve processes for the department'
+        : 'e.g. Software Engineer at a Company | Passionate about technology';
+      analyze();
+    });
+  });
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function findMatches(text, phrases) {
+    const lower = text.toLowerCase();
+    const found = [];
+    phrases.forEach(p => {
+      let idx = lower.indexOf(p);
+      while (idx !== -1) {
+        found.push({ start: idx, end: idx + p.length, phrase: p });
+        idx = lower.indexOf(p, idx + 1);
+      }
+    });
+    return found;
+  }
+
+  function buildAnnotated(text, weakMatches, buzzMatches) {
+    const marks = [...weakMatches.map(m => ({...m, type: 'weak'})), ...buzzMatches.map(m => ({...m, type: 'buzz'}))]
+      .sort((a, b) => a.start - b.start);
+
+    let result = '';
+    let cursor = 0;
+    marks.forEach(m => {
+      if (m.start < cursor) return;
+      result += escapeHtml(text.slice(cursor, m.start));
+      const cls = m.type === 'weak' ? 'weak' : '';
+      result += `<mark class="${cls}">${escapeHtml(text.slice(m.start, m.end))}</mark>`;
+      cursor = m.end;
+    });
+    result += escapeHtml(text.slice(cursor));
+    return result;
+  }
+
+  function analyze() {
+    const text = input.value;
+    charCount.textContent = `${text.length} characters`;
+
+    if (!text.trim()) {
+      output.innerHTML = '<div class="empty-state">Paste something on the left.<br>The markup shows up here.</div>';
+      return;
+    }
+
+    const lower = text.toLowerCase();
+    const words = text.trim().split(/\s+/);
+    const checks = [];
+    let score = 100;
+
+    const weakMatches = findMatches(text, WEAK_VERBS);
+    const buzzMatches = findMatches(text, BUZZWORDS);
+    const hasStrongVerb = STRONG_VERBS.some(v => new RegExp(`\\b${v}\\b`, 'i').test(text));
+    const hasNumber = /\d/.test(text);
+
+    // Weak opener check
+    if (weakMatches.length > 0) {
+      score -= 25;
+      checks.push({ type: 'fail', text: `Opens weak — <b>"${weakMatches[0].phrase}"</b> describes a duty, not an outcome. Swap it for a strong verb: built, led, cut, launched.` });
+    } else if (hasStrongVerb) {
+      checks.push({ type: 'pass', text: 'Leads with a strong action verb — good.' });
+    } else {
+      score -= 10;
+      checks.push({ type: 'warn', text: 'No clear action verb detected. Start with what you did, not what you were assigned.' });
+    }
+
+    // Quantified impact
+    if (hasNumber) {
+      checks.push({ type: 'pass', text: 'Includes a number — quantified impact is what makes a bullet credible.' });
+    } else {
+      score -= 25;
+      checks.push({ type: 'fail', text: mode === 'bullet'
+        ? 'No numbers anywhere. Add scale: team size, % change, dollars, time saved, users affected.'
+        : 'No numbers. A stat (years of experience, scale of impact) makes a headline concrete.' });
+    }
+
+    // Buzzwords
+    if (buzzMatches.length > 0) {
+      score -= 10 * Math.min(buzzMatches.length, 3);
+      checks.push({ type: 'warn', text: `Contains ${buzzMatches.length} filler phrase${buzzMatches.length > 1 ? 's' : ''} (e.g. <b>"${buzzMatches[0].phrase}"</b>) — these read as generic to recruiters. Cut or replace with a specific fact.` });
+    } else {
+      checks.push({ type: 'pass', text: 'No generic filler phrases — clean.' });
+    }
+
+    // Length
+    if (mode === 'bullet') {
+      if (words.length > 30) {
+        score -= 10;
+        checks.push({ type: 'warn', text: `${words.length} words — long for one bullet. Aim for under 25; split into two if it's covering two accomplishments.` });
+      } else if (words.length < 6) {
+        score -= 15;
+        checks.push({ type: 'fail', text: 'Too short to carry any real information. Add what you did, the scope, and the result.' });
+      } else {
+        checks.push({ type: 'pass', text: `${words.length} words — reasonable length.` });
+      }
+    } else {
+      if (text.length > 220) {
+        score -= 15;
+        checks.push({ type: 'fail', text: `${text.length} characters — LinkedIn headlines truncate around 220. Trim it.` });
+      } else if (text.length < 15) {
+        score -= 10;
+        checks.push({ type: 'warn', text: 'Very short — a title alone wastes the space. Add what you actually do or focus on.' });
+      } else {
+        checks.push({ type: 'pass', text: `${text.length} characters — fits within display limits.` });
+      }
+    }
+
+    // Passive voice rough check
+    if (/\b(was|were|been|being)\s+\w+ed\b/i.test(text)) {
+      score -= 10;
+      checks.push({ type: 'warn', text: 'Passive construction detected — rewrite so the subject is doing the action, not receiving it.' });
+    }
+
+    score = Math.max(0, Math.min(100, score));
+    const scoreClass = score >= 75 ? 'good' : score >= 50 ? 'mid' : 'bad';
+    const scoreLabel = score >= 75 ? 'Strong' : score >= 50 ? 'Needs work' : 'Rewrite recommended';
+
+    const annotatedHtml = buildAnnotated(text, weakMatches, buzzMatches);
+
+    output.innerHTML = `
+      <div class="score-row">
+        <span class="score-num ${scoreClass}">${score}</span>
+        <span class="score-label">${scoreLabel}<br>out of 100</span>
+      </div>
+      <div class="checks">
+        ${checks.map(c => `<div class="check ${c.type}"><span class="check-icon">${c.type === 'pass' ? '✓' : c.type === 'warn' ? '!' : '✕'}</span><span class="check-text">${c.text}</span></div>`).join('')}
+      </div>
+      <p class="panel-label" style="margin-top:20px;">Marked-up text</p>
+      <div class="annotated">${annotatedHtml}</div>
+    `;
+  }
+
+  input.addEventListener('input', analyze);
+</script>
+
+</body>
+</html>
